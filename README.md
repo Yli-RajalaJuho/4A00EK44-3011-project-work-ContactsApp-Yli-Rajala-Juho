@@ -1,2 +1,2 @@
-# 4A00EK44-3011-introduction-to-programming-Yli-Rajala-Juho-project-work-ContactsApp
+# 4A00EK44-3011-project-work-ContactsApp-Yli-Rajala-Juho
 Project: ContactsApp 
