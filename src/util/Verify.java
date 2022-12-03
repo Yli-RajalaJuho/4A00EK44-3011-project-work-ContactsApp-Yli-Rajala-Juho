@@ -92,6 +92,9 @@ public class Verify {
         return false;
     }
     public static boolean verifyAddress(String inputaddress) {
+        if (inputaddress.equals(" ")) {
+            return true;
+        }
         if (inputaddress.length() > 0 && inputaddress.length() < 40) {
             return true;
         }
@@ -99,36 +102,39 @@ public class Verify {
         return false;
     }
     public static boolean verifyEmail(String inputemail) {
-        boolean verify = false;
+        boolean verify;
+        if (inputemail.equals(" ")) {
+            verify = true;
+        } else {
+            int atcount = 0;
+            int dotcount = 0;
+            for (int i=0; i<inputemail.length(); i++) {
+                if (inputemail.charAt(i) == '@') {
+                    atcount++;
+                } else if (inputemail.charAt(i) == '.') {
+                    dotcount++;
+                }
+            }
 
-        int atcount = 0;
-        int dotcount = 0;
-        for (int i=0; i<inputemail.length(); i++) {
-            if (inputemail.charAt(i) == '@') {
-                atcount++;
-            } else if (inputemail.charAt(i) == '.') {
-                dotcount++;
+            if (inputemail.charAt(0) != '@' &&
+            inputemail.charAt(0) != '.' &&
+            inputemail.charAt(inputemail.length()-1) != '@' &&
+            inputemail.charAt(inputemail.length()-1) != '.' &&
+            atcount == 1 && dotcount > 0) {
+                verify = true;
+            } else {
+                verify = false;
             }
         }
 
-        if (inputemail.charAt(0) != '@' &&
-        inputemail.charAt(0) != '.' &&
-        inputemail.charAt(inputemail.length()-1) != '@' &&
-        inputemail.charAt(inputemail.length()-1) != '.' &&
-        atcount == 1 && dotcount > 0) {
-            verify = true;
-        } else {
-            verify = false;
-        }
-
         return verify;
-
     }
     public static boolean verifyYesNo(String input) {
 
         if (input.equals("1") || input.equals("2")) {
             return true;
         }
+
         return false;
     }
 }

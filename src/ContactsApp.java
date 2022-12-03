@@ -3,6 +3,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.io.*;
 
 //oma verify
 import src.util.Verify;
@@ -15,7 +16,7 @@ import src.util.Verify;
 public class ContactsApp {
     public static void main(String[] args) {
 
-        ArrayList<Person> contacts = new ArrayList<Person>();
+        ArrayList<Person> contacts = loadContacts();
 
         JFrame display = new JFrame();
         display.setLocationRelativeTo(null);
@@ -27,7 +28,7 @@ public class ContactsApp {
 
         //add
         JButton addnewcontact = new JButton("Add a new contact");
-        addnewcontact.addActionListener((e) -> contacts.add(addNewPerson()));
+        addnewcontact.addActionListener((e) -> addNewPerson(contacts));
         flowpanel.add(addnewcontact);
 
 
@@ -55,46 +56,52 @@ public class ContactsApp {
     }
 
     //adding a person into the contacts list
-    public static Person addNewPerson() {
+    public static void addNewPerson(ArrayList contactsbook) {
 
         // asking the info
         String id = JOptionPane.showInputDialog("Enter social security number\nin proper Finlands id format!\nDD/MM/YY/C/ZZZ/Q :");
         while (Verify.verifyId(id) != true) {
             id = JOptionPane.showInputDialog("Please give a proper Finlands id format!!!\nDD/MM/YY/C/ZZZ/Q :");
         }
-        String fname = ""; 
+        String fname = JOptionPane.showInputDialog("Enter firstname :"); 
         while (Verify.verifyFname(fname) != true) {
-            fname = JOptionPane.showInputDialog("Enter the firstname :");
+            fname = JOptionPane.showInputDialog("Please give a proper firstname :");
         }
-        String lname = ""; 
+        String lname = JOptionPane.showInputDialog("Enter lastname :");
         while (Verify.verifyLname(lname) != true) {
-            lname = JOptionPane.showInputDialog("Enter the lastname :");
+            lname = JOptionPane.showInputDialog("Please give a proper lastname :");
         }
-        String phoneno = "";
+        String phoneno = JOptionPane.showInputDialog("Enter a phone number :");
         while (Verify.verifyPhoneNo(phoneno) != true) {
-            phoneno = JOptionPane.showInputDialog("Enter phone number :");
+            phoneno = JOptionPane.showInputDialog("Please give a proper phone number :");
         }
-        String address = "";
-        address = JOptionPane.showInputDialog("Enter address (optional) :");
-        if ((address == null) && Verify.verifyAddress(address) != true) {
-            while (Verify.verifyAddress(address) != true) {
-                address = "";
-                address = JOptionPane.showInputDialog("Enter valid address (optional) :");
+        String address = JOptionPane.showInputDialog("Enter address (optional) :");
+        if (address.equals("")) {
+            address = " ";
+        }
+        while (Verify.verifyAddress(address) != true) {
+            address = JOptionPane.showInputDialog("Enter a valid address (optional) :");
+            if (address.equals("")) {
+                address = " ";
             }
         }
-        String email = "";
-        email = JOptionPane.showInputDialog("Enter email address (optional):");
-        if ((email == null) && Verify.verifyAddress(address) != true) {
-            while (Verify.verifyEmail(email) != true) {
-                email = "";
-                email = JOptionPane.showInputDialog("Enter a valid email address (optional):");
+        String email = JOptionPane.showInputDialog("Enter email address (optional):");
+        if (email.equals("")) {
+            email = " ";
+        }
+        while (Verify.verifyEmail(email) != true) {
+            email = JOptionPane.showInputDialog("Enter a valid email address (optional):");
+            if (email.equals("")) {
+                email = " ";
             }
         }
 
         // add the person into the arraylist
         Person newcontact = new Person(id, fname, lname, phoneno, address, email);
+        contactsbook.add(newcontact);
         System.out.println("UUSI KONTAKTI LUOTU");
-        return newcontact;
+
+        saveContacts(contactsbook);
     }
     //searching from the contacts list
     public static void searchPerson(ArrayList searchfrom) {
@@ -142,7 +149,7 @@ public class ContactsApp {
             input.equals(y.getEmail())) {
                 //verifying if user wants to update this person
                 if (y.validateUpd() == true) {
-                    Person updated = y.updateInfo();
+                    Person updated = y.updatePerson();
                     updatecontact.set(i, updated);
                 }
                 found = true;
@@ -153,6 +160,8 @@ public class ContactsApp {
         if (found != true) {
             JOptionPane.showMessageDialog(null, "No matching search results found for :\n" + input);
         }
+
+        saveContacts(updatecontact);
     }
     //deleting from the contacts list
     public static void deletePerson(ArrayList deletefrom) {
@@ -183,6 +192,56 @@ public class ContactsApp {
         if (found != true) {
             JOptionPane.showMessageDialog(null, "No matching search results found for:\n" + input);
         }
+        saveContacts(deletefrom);
+    }
+    // saves the current contactsbook
+    public static void saveContacts(ArrayList contacts) {
+        try {
+            Person personinfo;
+            String currentperson;
+            FileWriter infoholder = new FileWriter("Contactsbook.txt");
+            PrintWriter contactsbook = new PrintWriter(infoholder);
+
+            for (int i=0; i<contacts.size(); i++) {
+                personinfo = (Person) contacts.get(i);
+                currentperson = personinfo.getId() + "," + personinfo.getFname() + "," + personinfo.getLname() + "," + personinfo.getPhone() + "," + personinfo.getAddress() + "," + personinfo.getEmail();
+                contactsbook.println(currentperson);
+            }
+            contactsbook.flush();
+            contactsbook.close();
+            infoholder.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    // loads the existing contactsbook
+    public static ArrayList<Person> loadContacts() {
+        ArrayList<Person> contactslist = new ArrayList<Person>();
+        String tokens[] = null;
+        String id, fname, lname, phone, add, email;
+        try {
+            FileReader bookreader = new FileReader("Contactsbook.txt");
+            BufferedReader inforeader = new BufferedReader(bookreader);
+            String personinfo = inforeader.readLine();
+            while (personinfo != null) {
+                tokens = personinfo.split(",");
+                id = tokens[0];
+                fname = tokens[1];
+                lname = tokens[2];
+                phone = tokens[3];
+                add = tokens[4];
+                email = tokens[5];
+                Person y = new Person(id, fname, lname, phone, add, email);
+                contactslist.add(y);
+                personinfo = inforeader.readLine();
+            }
+            inforeader.close();
+            bookreader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return contactslist;
     }
 }
 /**
@@ -218,6 +277,75 @@ class Person {
         "\nPhone number: " + this.phonenumber +
         "\nAddress: " + this.address +
         "\nEmail: " + this.email);
+    }
+
+    // update the info this person has
+    public Person updatePerson() {
+        String id = JOptionPane.showInputDialog("Old social security number :" + this.getId() + "\n\nEnter the new social security number\nin proper Finlands id format!\nDD/MM/YY/C/ZZZ/Q :\n\nIf you wish to make no changes please press [ENTER]");
+        if (id.equals("")) {
+            id = this.getId();
+        }
+        while (Verify.verifyId(id) != true) {
+            id = JOptionPane.showInputDialog("Old social security number :" + this.getId() + "\n\nPlease give a proper Finlands id format!!!\nDD/MM/YY/C/ZZZ/Q :\n\nIf you wish to make no changes please press [ENTER]");
+            if (id.equals("")) {
+                id = this.getId();
+            }
+        }
+        String fname = JOptionPane.showInputDialog("Old firstname :" + this.getFname() + "\n\nEnter a new firstname :\n\nIf you wish to make no changes please press [ENTER]");
+        if (fname.equals("")) {
+            fname = this.getFname();
+        }
+        while (Verify.verifyFname(fname) != true) {
+            fname = JOptionPane.showInputDialog("Old firstname :" + this.getFname() + "\n\nPlease give a proper firstname :\n\nIf you wish to make no changes please press [ENTER]");
+            if (fname.equals("")) {
+                fname = this.getFname();
+            }
+        }
+        String lname = JOptionPane.showInputDialog("Old lastname :" + this.getLname() + "\n\nEnter a new lastname :\n\nIf you wish to make no changes please press [ENTER]");
+        if (lname.equals("")) {
+            lname = this.getLname();
+        }
+        while (Verify.verifyLname(lname) != true) {
+            lname = JOptionPane.showInputDialog("Old lastname :" + this.getLname() + "\n\nPlease give a proper lastname :\n\nIf you wish to make no changes please press [ENTER]");
+            if (lname.equals("")) {
+                lname = this.getLname();
+            }
+        }
+        String phoneno = JOptionPane.showInputDialog("Old phonenumber :" + this.getPhone() + "\n\nEnter a new phonenumber :\n\nIf you wish to make no changes please press [ENTER]");
+        if (phoneno.equals("")) {
+            phoneno = this.getPhone();
+        }
+        while (Verify.verifyPhoneNo(phoneno) != true) {
+            phoneno = JOptionPane.showInputDialog("Old phonenumber :" + this.getPhone() + "\n\nPlease give a proper phone number :\n\nIf you wish to make no changes please press [ENTER]");
+            if (phoneno.equals("")) {
+                phoneno = this.getPhone();
+            }
+        }
+        String address = JOptionPane.showInputDialog("Old address :" + this.getAddress() + "\n\nEnter new address (optional) :\n\nIf you wish to make no changes please press [ENTER]");
+        if (address.equals("")) {
+            address = this.getAddress();
+        }
+        while (Verify.verifyAddress(address) != true) {
+            address = JOptionPane.showInputDialog("Old address :" + this.getAddress() + "\n\nPlease enter a valid address (optional) :\n\nIf you wish to make no changes please press [ENTER]");
+            if (address.equals("")) {
+                address = this.getAddress();
+            }
+        }
+        String email = JOptionPane.showInputDialog("Old email :" + this.getEmail() + "\n\nEnter new email address (optional) :\n\nIf you wish to make no changes please press [ENTER]");
+        if (email.equals("")) {
+            email = this.getEmail();
+        }
+        while (Verify.verifyEmail(email) != true) {
+            email = JOptionPane.showInputDialog("Old email :" + this.getEmail() + "\n\nPlease enter a valid email address (optional) :\n\nIf you wish to make no changes please press [ENTER]");
+            if (email.equals("")) {
+                email = this.getEmail();
+            }
+        }
+
+        // add the person into the arraylist
+        Person updated = new Person(id, fname, lname, phoneno, address, email);
+        System.out.println("KONTAKTIA MUOKATTU");
+        return updated;
     }
 
     //if the user wants to delete this specific person
@@ -262,63 +390,6 @@ class Person {
         }
 
         return update;
-    }
-
-    // update the info this person has
-    public Person updateInfo() {
-        // asking the info
-        String id = JOptionPane.showInputDialog("Enter the new social security number\nin proper Finlands id format!\nDD/MM/YY/C/ZZZ/Q :\n\nIf you wish to make no changes please press [ENTER]");
-        if (id.equals("")) {
-            id = this.getId();
-        }
-        while (Verify.verifyId(id) != true) {
-            id = JOptionPane.showInputDialog("Please give a proper Finlands id format!!!\nDD/MM/YY/C/ZZZ/Q :\n\nIf you wish to make no changes please press [ENTER]");
-            if (id.equals("")) {
-                id = this.getId();
-            }
-        }
-        String fname = ""; 
-        while (Verify.verifyFname(fname) != true) {
-            fname = JOptionPane.showInputDialog("Enter the firstname :");
-            if (fname.equals("")) {
-                fname = this.getFname();
-            }
-        }
-        String lname = ""; 
-        while (Verify.verifyLname(lname) != true) {
-            lname = JOptionPane.showInputDialog("Enter the lastname :");
-            if (lname.equals("")) {
-                lname = this.getLname();
-            }
-        }
-        String phoneno = "";
-        while (Verify.verifyPhoneNo(phoneno) != true) {
-            phoneno = JOptionPane.showInputDialog("Enter phone number :");
-            if (phoneno.equals("")) {
-                phoneno = this.getPhone();
-            }
-        }
-        String address = "";
-        address = JOptionPane.showInputDialog("Enter address (optional) :");
-        if ((address == null) && Verify.verifyAddress(address) != true) {
-            while (Verify.verifyAddress(address) != true) {
-                address = "";
-                address = JOptionPane.showInputDialog("Enter a valid address (optional) :");
-            }
-        }
-        String email = "";
-        email = JOptionPane.showInputDialog("Enter email address (optional):");
-        if ((email == null) && Verify.verifyAddress(address) != true) {
-            while (Verify.verifyEmail(email) != true) {
-                email = "";
-                email = JOptionPane.showInputDialog("Enter a valid email address (optional):");
-            }
-        }
-
-        // add the person into the arraylist
-        Person updated = new Person(id, fname, lname, phoneno, address, email);
-        System.out.println("KONTAKTIA MUOKATTU");
-        return updated;
     }
 
     //set method for id
