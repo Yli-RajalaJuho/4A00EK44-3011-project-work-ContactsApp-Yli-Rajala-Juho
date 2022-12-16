@@ -98,8 +98,13 @@ public class ContactsApp {
 
         // asking the info
         String id = JOptionPane.showInputDialog("Enter social security number\nin the proper Finlands id format!\nDD/MM/YY/C/ZZZ/Q :");
-        while (Verify.verifyId(id) != true) {
-            id = JOptionPane.showInputDialog("Please give a proper Finlands id format!!!\nDD/MM/YY/C/ZZZ/Q :");
+        if (Verify.verifyIdDuplicates(id, contactsbook) != true) {
+            id = JOptionPane.showInputDialog("This id: [" + id + "] was already saved to another contact!" +
+            "\n\nPlease give a unique id in the proper Finlands id format\nDD/MM/YY/C/ZZZ/Q :");
+        } else {
+            while (Verify.verifyId(id) != true) {
+                id = JOptionPane.showInputDialog("Please give a proper Finlands id format!!!\nDD/MM/YY/C/ZZZ/Q :");
+            }
         }
         String fname = JOptionPane.showInputDialog("Enter firstname :"); 
         while (Verify.verifyFname(fname) != true) {
@@ -228,7 +233,7 @@ public class ContactsApp {
             input.equalsIgnoreCase(y.getEmail())) {
                 //verifying if user wants to update this person
                 if (y.validateUpd() == true) {
-                    Person updated = y.updatePerson();
+                    Person updated = y.updatePerson(contactsbook);
                     contactsbook.set(i, updated);
                 }
                 found = true;
@@ -470,6 +475,8 @@ class Person {
     * If the end user doesn't enter a new String
     * it uses the old information using the Person objects get() methods.
     * 
+    * @param contacts This is the contacts list where the id refers to when defining
+    * if the end users given input for id was already presented in another Person objects data.
     * @param id This is the new id that is asked from the end user.
     * If the end user decides to press enter the String is then filled
     * with the original userid using the Persons getId() method.
@@ -493,9 +500,10 @@ class Person {
     * The Person is constructed using the new/old information.
     * @return This method returns the newly generated Person object updated.
     */
-    public Person updatePerson() {
+    public Person updatePerson(ArrayList contacts) {
         String id = JOptionPane.showInputDialog("Old social security number :" + this.getId() + 
         "\n\nEnter the new social security number\nin proper Finlands id format!\nDD/MM/YY/C/ZZZ/Q :\n\nIf you wish to make no changes please press [ENTER]");
+        
         if (id.equals("")) {
             id = this.getId();
         }
@@ -504,6 +512,16 @@ class Person {
             "\n\nPlease give a proper Finlands id format!!!\nDD/MM/YY/C/ZZZ/Q :\n\nIf you wish to make no changes please press [ENTER]");
             if (id.equals("")) {
                 id = this.getId();
+            }
+        }
+        if (!id.equals(this.getId())) {
+            if (Verify.verifyIdDuplicates(id, contacts) != true) {
+                id = JOptionPane.showInputDialog("Old social security number :" + this.getId() +
+                "\nThe id you gave: [" + id + "] was already saved to another contact!" +
+                "\n\nPlease enter a new unique social security number\nin proper Finlands id format!\nDD/MM/YY/C/ZZZ/Q :\n\nIf you wish to make no changes please press [ENTER]");
+                if (id.equals("")) {
+                    id = this.getId();
+                }
             }
         }
         String fname = JOptionPane.showInputDialog("Old firstname :" + this.getFname() + 
@@ -825,6 +843,24 @@ class Verify {
             return false;
         }
 
+
+        return true;
+    }
+    /**
+    * This method verifies that the given id was a unique id and it was not already found from another Person objects data.
+    * 
+    * @param inputid End users input inputid is the String that the method then proceeds to verify.
+    * @param book This is the ArrayList where the method searches every Person objects ids.
+    * @param currentp This is the current Person object where the inputid is then compared to.
+    * @return This returns a boolean true if the id was unique and false if it wasn't.
+    */
+    public static boolean verifyIdDuplicates(String inputid, ArrayList book) {
+        for (int i=0; i<book.size(); i++) {
+            Person currentp = (Person) book.get(i);
+            if (inputid.equals(currentp.getId())) {
+                return false;
+            }
+        }
 
         return true;
     }
