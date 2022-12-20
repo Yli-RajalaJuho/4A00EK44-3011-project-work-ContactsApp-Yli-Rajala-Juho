@@ -98,11 +98,11 @@ public class ContactsApp {
 
         // asking the info
         String id = JOptionPane.showInputDialog("Enter social security number\nin the proper Finlands id format!\nDD/MM/YY/C/ZZZ/Q :");
-        if (Verify.verifyIdDuplicates(id, contactsbook) != true) {
-            id = JOptionPane.showInputDialog("This id: [" + id + "] was already saved to another contact!" +
+        while (Verify.verifyId(id) != true || Verify.verifyIdDuplicates(id, contactsbook) != true) {
+            if (Verify.verifyIdDuplicates(id, contactsbook) != true) {
+                id = JOptionPane.showInputDialog("This id: [" + id + "] was already saved to another contact!" +
             "\n\nPlease give a unique id in the proper Finlands id format\nDD/MM/YY/C/ZZZ/Q :");
-        } else {
-            while (Verify.verifyId(id) != true) {
+            } else {
                 id = JOptionPane.showInputDialog("Please give a proper Finlands id format!!!\nDD/MM/YY/C/ZZZ/Q :");
             }
         }
@@ -232,7 +232,7 @@ public class ContactsApp {
             input.equalsIgnoreCase(y.getAddress()) ||
             input.equalsIgnoreCase(y.getEmail())) {
                 //verifying if user wants to update this person
-                if (y.validateUpd() == true) {
+                if (y.validateUpd() == 0) {
                     Person updated = y.updatePerson(contactsbook);
                     contactsbook.set(i, updated);
                 }
@@ -278,7 +278,7 @@ public class ContactsApp {
             input.equalsIgnoreCase(y.getAddress()) ||
             input.equalsIgnoreCase(y.getEmail())) {
                 //verifying if user wants to delete this person
-                if (y.validateDel() == true) {
+                if (y.validateDel() == 0) {
                     contactsbook.remove(y);
                 }
                 found = true;
@@ -383,16 +383,12 @@ public class ContactsApp {
     * This method is used to clear the whole contactsbook ArrayList and
     * then saving it, also clearing the separate text file "Contactsbook.txt".
     *
-    * @param yesno This is simply a String that holds a value "1" or "2"
+    * @param yesno This is simply an integer that holds a value "0" or "1"
     * depending on if the end user wants to clear the whole contactsbook.
     */
     public static void clearContacts(ArrayList contactsbook) {
-        String yesno = "";
-
-        while (Verify.verifyYesNo(yesno) != true) {
-            yesno = JOptionPane.showInputDialog("Do you wish to clear the whole contactsbook?\n\nType: [1] for YES and [2] for NO");
-        }
-        if (yesno.equals("1")) {
+        int yesno = JOptionPane.showConfirmDialog(null, "Do you wish to clear all of the contacts", "clear contacts", JOptionPane.YES_NO_OPTION);
+        if (yesno == 0) {
             contactsbook.removeAll(contactsbook);
             JOptionPane.showMessageDialog(null, "Contactsbook cleared");
         } else {
@@ -503,25 +499,17 @@ class Person {
     public Person updatePerson(ArrayList contacts) {
         String id = JOptionPane.showInputDialog("Old social security number :" + this.getId() + 
         "\n\nEnter the new social security number\nin proper Finlands id format!\nDD/MM/YY/C/ZZZ/Q :\n\nIf you wish to make no changes please press [ENTER]");
-        
-        if (id.equals("")) {
+        if (id == null || id.equals("")) {
             id = this.getId();
         }
-        while (Verify.verifyId(id) != true) {
-            id = JOptionPane.showInputDialog("Old social security number :" + this.getId() + 
-            "\n\nPlease give a proper Finlands id format!!!\nDD/MM/YY/C/ZZZ/Q :\n\nIf you wish to make no changes please press [ENTER]");
-            if (id.equals("")) {
+        while ((Verify.verifyId(id) != true || Verify.verifyIdDuplicates(id, contacts) != true) && !id.equals(this.getId())) {
+            if (id == null || id.equals("")) {
                 id = this.getId();
-            }
-        }
-        if (!id.equals(this.getId())) {
-            if (Verify.verifyIdDuplicates(id, contacts) != true) {
-                id = JOptionPane.showInputDialog("Old social security number :" + this.getId() +
-                "\nThe id you gave: [" + id + "] was already saved to another contact!" +
-                "\n\nPlease enter a new unique social security number\nin proper Finlands id format!\nDD/MM/YY/C/ZZZ/Q :\n\nIf you wish to make no changes please press [ENTER]");
-                if (id.equals("")) {
-                    id = this.getId();
-                }
+            } else if (Verify.verifyIdDuplicates(id, contacts) != true) {
+                id = JOptionPane.showInputDialog("This id: [" + id + "] was already saved to another contact!" +
+                "\n\nPlease give a unique id in the proper Finlands id format\nDD/MM/YY/C/ZZZ/Q :");
+            } else {
+                id = JOptionPane.showInputDialog("Please give a proper Finlands id format!!!\nDD/MM/YY/C/ZZZ/Q :");
             }
         }
         String fname = JOptionPane.showInputDialog("Old firstname :" + this.getFname() + 
@@ -593,65 +581,48 @@ class Person {
 
     /**
     * This method is used to ask if the end user wants to proceed deleting a Person object.
-    * The method first shows the Person objects information and asks the end user to either press "1" to continue or "2" to not proceed
-    * deleting the Person object that is currently being shown.
+    * The method first shows the Person objects information and asks the end user to press either yes or no to
+    * delete the Person object that is currently being shown.
     *
-    * @param input This string holds the end users input which is then validated.
-    * @param delete Is the returned boolean value true if the Person is set to be deleted (input is '1') or false if not (input is '2').
-    * @return Returns a boolean value that delete holds currently.
+    * @param yesno This integer holds the end users input which is then validated.
+    * @return Returns the integer value that yesno holds currently.
     */
-    public boolean validateDel() {
-        boolean delete = false;
-
-        String input = "";
-        while (Verify.verifyYesNo(input) != true) {
-            input = JOptionPane.showInputDialog("Do you wish to delete this contact:" + 
+    public int validateDel() {
+        int yesno = JOptionPane.showConfirmDialog(null, "Do you wish to delete this contact:" + 
             "\nName: " + this.firstname + " " + this.lastname +
             "\nIdentification number: " + this.userid +
             "\nPhone number: " + this.phonenumber +
             "\nAddress: " + this.address +
-            "\nEmail: " + this.email + "\nfrom contacts?\n\nType: [1] for YES and [2] for NO");
-        }
-        if (input.equals("1")) {
+            "\nEmail: " + this.email, "delete contact", JOptionPane.YES_NO_OPTION);
+        if (yesno == 0) {
             JOptionPane.showMessageDialog(null, "Contact deleted");
-            delete = true;
-        } else if (input.equals("2")) {
+        } else {
             JOptionPane.showMessageDialog(null, "No changes made to the contact");
-            delete = false;
         }
 
-        return delete;
+        return yesno;
     }
 
     /**
     * This method is used to ask if the end user wants to proceed updating a Person object.
-    * The method first shows a Person objects information and asks the end user to either press "1" to continue or "2" to not proceed
-    * updating the Person object that is currently being shown.
+    * The method first shows the Person objects information and asks the end user to press either yes or no to
+    * update the Person object that is currently being shown.
     *
-    * @param input This string holds the end users input which is then validated.
-    * @param update Is the returned boolean value true if the Person is set to be updated (input is '1') or false if not (input is '2').
-    * @return Returns a boolean value that update holds currently.
+    * @param yesno This integer holds the end users input which is then validated.
+    * @return Returns the integer value that yesno holds currently.
     */
-    public boolean validateUpd() {
-        boolean update = false;
-
-        String input = "";
-        while (Verify.verifyYesNo(input) != true) {
-            input = JOptionPane.showInputDialog("Do you wish to update this contact :" + 
+    public int validateUpd() {
+        int yesno = JOptionPane.showConfirmDialog(null, "Do you wish to update this contact:" + 
             "\nName: " + this.firstname + " " + this.lastname +
             "\nIdentification number: " + this.userid +
             "\nPhone number: " + this.phonenumber +
             "\nAddress: " + this.address +
-            "\nEmail: " + this.email + "\n\nType: [1] for YES and [2] for NO");
-        }
-        if (input.equals("1")) {
-            update = true;
-        } else if (input.equals("2")) {
-            JOptionPane.showMessageDialog(null, "No changes were made to the contact");
-            update = false;
+            "\nEmail: " + this.email, "update contact", JOptionPane.YES_NO_OPTION);
+        if (yesno != 0) {
+            JOptionPane.showMessageDialog(null, "No changes made to the contact");
         }
 
-        return update;
+        return yesno;
     }
 
     /**
@@ -875,6 +846,9 @@ class Verify {
     * and false if it wasn't.
     */
     public static boolean verifyFname(String inputfname) {
+        if (inputfname.isBlank() && inputfname.length() > 1) {
+            return false;
+        }
         if (inputfname.length() > 1 &&
         inputfname.length() < 40 &&
         inputfname.matches(".*[A-Za-zåäöÅÄÖ-]*+") &&
@@ -896,6 +870,9 @@ class Verify {
     * and false if it wasn't.
     */
     public static boolean verifyLname(String inputlname) {
+        if (inputlname.isBlank() && inputlname.length() > 1) {
+            return false;
+        }
         if (inputlname.length() > 1 &&
         inputlname.length() < 40 &&
         inputlname.matches(".*[A-Za-zåäöÅÄÖ-]*+") &&
@@ -1016,20 +993,5 @@ class Verify {
         }
 
         return verify;
-    }
-    /**
-    * The method verifyYesNo() simply verifies if the given input was a character '1' or '2'.
-    *
-    * @param input Is the end users input that the method then proceeds to verify.
-    * @return return a boolean value true if the given input was a character '1' or '2'.
-    * and false if it wasn't.
-    */
-    public static boolean verifyYesNo(String input) {
-
-        if (input.equals("1") || input.equals("2")) {
-            return true;
-        }
-
-        return false;
     }
 }
