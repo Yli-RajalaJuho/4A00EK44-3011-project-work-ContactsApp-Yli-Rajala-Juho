@@ -12,3 +12,5 @@ It also refers to it when the application starts by loading the information from
 Any changes to the text file separately through files can cause some major bugs and may potentially crash the whole application.
 
 The application is run with the command [cd src/ && javac *.java && java ContactsApp].
+
+link to youtube video of the project: https://youtu.be/DZ-jm7-FAXc 
